@@ -62,6 +62,43 @@ class RomMClient:
             response.raise_for_status()
             return response.json()
 
+    def get_all_saves(self):
+        """Fetches all save records from RomM."""
+        url = f"{self.base_url}/api/saves"
+        try:
+            response = self.session.get(url)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logging.error(f"Failed to fetch saves: {e}")
+            return []
+
+    def get_saves_for_rom(self, rom_id):
+        """Fetches all saves for a specific ROM ID."""
+        url = f"{self.base_url}/api/saves"
+        params = {"rom_id": rom_id}
+        try:
+            response = self.session.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logging.error(f"Failed to fetch saves for ROM {rom_id}: {e}")
+            return []
+
+    def download_save(self, save_id, target_path):
+        """Downloads a specific save file to the target path."""
+        url = f"{self.base_url}/api/saves/{save_id}"
+        try:
+            response = self.session.get(url, stream=True)
+            response.raise_for_status()
+            with open(target_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            return True
+        except Exception as e:
+            logging.error(f"Failed to download save {save_id}: {e}")
+            return False
+
     def search_rom(self, search_term):
         """Searches for a ROM ID based on a search term (filename or title)."""
         url = f"{self.base_url}/api/roms"

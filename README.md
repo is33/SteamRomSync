@@ -7,6 +7,7 @@ A background service for Steam Deck / SteamOS that automatically synchronizes em
 - **RetroArch Support:** Automatically maps `.srm` and `.sav` files to RomM entries.
 - **Vita3K Support:** Detects Vita3K Title ID structures and maps them to RomM.
 - **Background Service:** Runs as a systemd user service on SteamOS.
+- **Save Manager UI:** A desktop application to browse and restore previous save versions from RomM.
 - **Debounced Uploads:** Prevents multiple uploads during rapid save operations.
 
 ## Installation & Setup

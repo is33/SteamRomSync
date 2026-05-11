@@ -39,6 +39,22 @@ systemctl --user start "$SERVICE_NAME"
 echo "Enabling linger for 'deck' user to ensure persistence..."
 loginctl enable-linger deck
 
+# Create Desktop Shortcut for Save Manager
+DESKTOP_FILE="$HOME/Desktop/SteamRomSync-Manager.desktop"
+echo "Creating desktop shortcut for Save Manager..."
+cat > "$DESKTOP_FILE" <<EOL
+[Desktop Entry]
+Name=SteamRomSync Manager
+Comment=Manage and restore emulator saves from RomM
+Exec=$SCRIPT_DIR/venv/bin/python3 $SCRIPT_DIR/manager_ui.py
+Icon=system-software-update
+Terminal=false
+Type=Application
+Categories=Game;Utility;
+Path=$SCRIPT_DIR
+EOL
+chmod +x "$DESKTOP_FILE"
+
 echo "Installation complete!"
 
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
