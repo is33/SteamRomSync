@@ -1,0 +1,12 @@
+[Unit]
+Description=SteamRomSync Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 %h/Downloads/SteamRomSync/main.py
+WorkingDirectory=%h/Downloads/SteamRomSync
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
