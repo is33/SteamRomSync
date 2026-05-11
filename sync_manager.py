@@ -3,9 +3,31 @@ import logging
 from romm_client import RomMClient
 
 class SyncManager:
-    def __init__(self, client: RomMClient):
+    def __init__(self, client: RomMClient, monitor_paths=None):
         self.client = client
         self.rom_id_cache = {}
+        self.monitor_paths = monitor_paths or []
+        self.last_sync_times = {} # path -> mtime
+
+    def perform_full_scan(self):
+        """Discovers and syncs all changed save files."""
+        from discovery import discover_save_files
+        logging.info("Starting full save discovery scan...")
+        files = discover_save_files(self.monitor_paths)
+        
+        for file_path in files:
+            try:
+                mtime = os.path.getmtime(file_path)
+                if file_path in self.last_sync_times:
+                    if mtime <= self.last_sync_times[file_path]:
+                        continue # Already synced this version
+                
+                self.handle_save_change(file_path)
+                self.last_sync_times[file_path] = mtime
+            except Exception as e:
+                logging.error(f"Error during scan for {file_path}: {e}")
+        
+        logging.info("Full scan complete.")
 
     def handle_save_change(self, file_path):
         """Processes a save file change."""

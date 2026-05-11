@@ -4,6 +4,7 @@ A background service for Steam Deck / SteamOS that automatically synchronizes em
 
 ## Features
 - **Automatic Monitoring:** Uses filesystem watchers to detect save file changes in real-time.
+- **Auto-Discovery:** Periodically scans common EmuDeck locations (Internal and SD Card) to find and sync saves automatically.
 - **RetroArch Support:** Automatically maps `.srm` and `.sav` files to RomM entries.
 - **Vita3K Support:** Detects Vita3K Title ID structures and maps them to RomM.
 - **Background Service:** Runs as a systemd user service on SteamOS.
