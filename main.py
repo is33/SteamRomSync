@@ -79,6 +79,10 @@ def main():
     
     sync_manager = SyncManager(client, monitor_paths=valid_paths)
     
+    # Trigger an initial full scan to backup existing saves
+    logging.info("Performing initial save discovery and backup...")
+    threading.Thread(target=sync_manager.perform_full_scan, daemon=True).start()
+    
     # Start periodic scan thread
     scan_thread = threading.Thread(target=periodic_scan, args=(sync_manager, scan_interval), daemon=True)
     scan_thread.start()
