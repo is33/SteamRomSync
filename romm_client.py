@@ -33,13 +33,19 @@ class RomMClient:
             return False
 
     def upload_save(self, rom_id, file_path, emulator=None):
-        """Uploads a save file to RomM."""
+        """Uploads a save file to RomM with a timestamped filename for versioning."""
         url = f"{self.base_url}/api/saves"
         
-        filename = os.path.basename(file_path)
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        original_filename = os.path.basename(file_path)
+        name, ext = os.path.splitext(original_filename)
+        # Create a timestamped filename: "SaveName_20231027_123000.srm"
+        versioned_filename = f"{name}_{timestamp}{ext}"
+        
         with open(file_path, 'rb') as f:
             files = {
-                'file': (filename, f, 'application/octet-stream')
+                'file': (versioned_filename, f, 'application/octet-stream')
             }
             data = {
                 'rom_id': rom_id,
@@ -47,7 +53,7 @@ class RomMClient:
             if emulator:
                 data['emulator'] = emulator
 
-            logging.info(f"Uploading {filename} to RomM (ID: {rom_id})...")
+            logging.info(f"Uploading {versioned_filename} to RomM (ID: {rom_id})...")
             response = self.session.post(url, files=files, data=data)
             
             if response.status_code != 200:
