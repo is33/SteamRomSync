@@ -40,5 +40,13 @@ echo "Enabling linger for 'deck' user to ensure persistence..."
 loginctl enable-linger deck
 
 echo "Installation complete!"
-echo "Please configure your .env file in $SCRIPT_DIR and restart the service with:"
-echo "systemctl --user restart $SERVICE_NAME"
+
+if [ ! -f "$SCRIPT_DIR/.env" ]; then
+    echo "No configuration found. Launching Setup Wizard..."
+    "$SCRIPT_DIR/venv/bin/python3" "$SCRIPT_DIR/main.py"
+else
+    echo "Configuration found. Restarting service..."
+    systemctl --user restart "$SERVICE_NAME"
+fi
+
+echo "All set! You can check the logs with: journalctl --user -u $SERVICE_NAME -f"

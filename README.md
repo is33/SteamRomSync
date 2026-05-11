@@ -9,34 +9,28 @@ A background service for Steam Deck / SteamOS that automatically synchronizes em
 - **Background Service:** Runs as a systemd user service on SteamOS.
 - **Debounced Uploads:** Prevents multiple uploads during rapid save operations.
 
-## Installation
+## Installation & Setup
 
 1. **Clone or Download** this repository to your Steam Deck.
 2. **Open Konsole** and navigate to the folder:
    ```bash
    cd ~/Downloads/SteamRomSync
    ```
-3. **Run the installer**:
+3. **Launch the Setup UI**:
    ```bash
+   # The installer will set up dependencies and open the Setup Wizard
    chmod +x install.sh
    ./install.sh
    ```
+4. **Follow the Wizard**: The Steam Deck-styled UI will walk you through connecting your RomM instance and selecting your save paths.
 
-## Configuration
+5. **Finished!** The wizard will automatically install and start the background service for you.
 
-1. Edit the `.env` file in the project directory:
-   ```bash
-   nano .env
-   ```
-2. Fill in your RomM details:
-   - `ROMM_URL`: The full URL to your RomM instance (e.g., `http://192.168.1.10:3000`).
-   - `ROMM_API_KEY`: Your RomM API key or Bearer token.
-   - `MONITOR_PATHS`: Comma-separated list of directories to watch. (Default EmuDeck paths are provided in `.env.example`).
-
-3. **Restart the service** to apply changes:
-   ```bash
-   systemctl --user restart steamromsync.service
-   ```
+## Manual Configuration (Optional)
+If you prefer to configure manually or are on a headless system:
+1. Copy `.env.example` to `.env`.
+2. Edit the `.env` file with your `ROMM_URL`, `ROMM_API_KEY` (or credentials), and `MONITOR_PATHS`.
+3. Restart the service: `systemctl --user restart steamromsync.service`
 
 ## Logs
 You can monitor the sync activity using:
