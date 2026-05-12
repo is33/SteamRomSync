@@ -35,6 +35,44 @@ class SaveManager(ctk.CTk):
         self.setup_ui()
         self.load_data()
 
+import subprocess
+import customtkinter as ctk
+import os
+import logging
+import re
+from pathlib import Path
+from dotenv import load_dotenv
+from romm_client import RomMClient
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+class SaveManager(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("SteamRomSync Save Manager")
+        self.geometry("800x650")
+        
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
+
+        load_dotenv()
+        self.romm_url = os.getenv("ROMM_URL")
+        self.romm_api_key = os.getenv("ROMM_API_KEY")
+        self.romm_username = os.getenv("ROMM_USERNAME")
+        self.romm_password = os.getenv("ROMM_PASSWORD")
+        self.monitor_paths = [p.strip() for p in os.getenv("MONITOR_PATHS", "").split(",") if p.strip()]
+
+        if not self.romm_url:
+            self.show_error("ROMM_URL not found. Please run setup.")
+            return
+
+        self.client = RomMClient(self.romm_url, api_key=self.romm_api_key, username=self.romm_username, password=self.romm_password)
+        
+        self.setup_ui()
+        self.load_data()
+
     def setup_ui(self):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=3)
@@ -92,8 +130,26 @@ class SaveManager(ctk.CTk):
         settings_frame = ctk.CTkScrollableFrame(self.main_view)
         settings_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+        # Service Status Area
+        status_frame = ctk.CTkFrame(settings_frame)
+        status_frame.pack(fill="x", pady=10, padx=10)
+        
+        ctk.CTkLabel(status_frame, text="Service Management", font=("Helvetica", 16, "bold")).pack(pady=5, padx=10, anchor="w")
+        
+        self.service_status_label = ctk.CTkLabel(status_frame, text="Checking status...", font=("Helvetica", 12))
+        self.service_status_label.pack(pady=5, padx=10, anchor="w")
+        
+        btn_frame = ctk.CTkFrame(status_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=5, padx=10)
+        
+        self.btn_restart = ctk.CTkButton(btn_frame, text="Restart Service", command=self.restart_service, width=150)
+        self.btn_restart.pack(side="left", padx=5)
+        
+        self.btn_refresh_status = ctk.CTkButton(btn_frame, text="Refresh Status", command=self.update_service_status, width=150, fg_color="gray")
+        self.btn_refresh_status.pack(side="left", padx=5)
+
         # Exclusion List
-        ctk.CTkLabel(settings_frame, text="Exclusion List (Comma separated names/paths)", font=("Helvetica", 14, "bold")).pack(pady=(10, 5), padx=10, anchor="w")
+        ctk.CTkLabel(settings_frame, text="Exclusion List (Comma separated names/paths)", font=("Helvetica", 14, "bold")).pack(pady=(20, 5), padx=10, anchor="w")
         self.exclusion_entry = ctk.CTkEntry(settings_frame, width=500)
         self.exclusion_entry.insert(0, os.getenv("EXCLUSION_LIST", ""))
         self.exclusion_entry.pack(pady=5, padx=10, fill="x")
@@ -107,6 +163,33 @@ class SaveManager(ctk.CTk):
         # Save Button
         save_btn = ctk.CTkButton(settings_frame, text="Save Settings", command=self.save_settings)
         save_btn.pack(pady=30, padx=10)
+        
+        # Initial status update
+        self.update_service_status()
+
+    def update_service_status(self):
+        """Checks the status of the systemd user service."""
+        try:
+            result = subprocess.run(["systemctl", "--user", "is-active", "steamromsync.service"], capture_output=True, text=True)
+            status = result.stdout.strip()
+            
+            if status == "active":
+                self.service_status_label.configure(text="● SteamRomSync Service: Active", text_color="green")
+            else:
+                self.service_status_label.configure(text=f"○ SteamRomSync Service: {status.capitalize() or 'Inactive'}", text_color="red")
+        except Exception as e:
+            self.service_status_label.configure(text=f"Service status error: {e}", text_color="orange")
+
+    def restart_service(self):
+        """Restarts the systemd user service."""
+        try:
+            self.service_status_label.configure(text="Restarting...", text_color="yellow")
+            subprocess.run(["systemctl", "--user", "restart", "steamromsync.service"], check=True)
+            self.update_service_status()
+            self.show_info("Service restarted successfully.")
+        except Exception as e:
+            self.show_error(f"Failed to restart service: {e}")
+            self.update_service_status()
 
     def save_settings(self):
         exclusions = self.exclusion_entry.get()
