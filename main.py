@@ -52,6 +52,8 @@ def main():
     romm_password = os.getenv("ROMM_PASSWORD")
     monitor_paths_raw = os.getenv("MONITOR_PATHS", "")
     scan_interval = int(os.getenv("SCAN_INTERVAL", "1800")) # Default 30 minutes
+    exclusion_list_raw = os.getenv("EXCLUSION_LIST", "")
+    save_keep_count = int(os.getenv("SAVE_KEEP_COUNT", "0"))
     
     if not romm_url:
         logging.error("ROMM_URL not set in .env")
@@ -61,6 +63,7 @@ def main():
         logging.warning("Authentication not configured. If your RomM instance requires it, syncing will fail.")
 
     monitor_paths = [p.strip() for p in monitor_paths_raw.split(",") if p.strip()]
+    exclusion_list = [e.strip() for e in exclusion_list_raw.split(",") if e.strip()]
     
     # Filter out non-existent paths
     valid_paths = []
@@ -77,7 +80,12 @@ def main():
     else:
         logging.info("Successfully connected to RomM heartbeat.")
     
-    sync_manager = SyncManager(client, monitor_paths=valid_paths)
+    sync_manager = SyncManager(
+        client, 
+        monitor_paths=valid_paths, 
+        exclusion_list=exclusion_list,
+        save_keep_count=save_keep_count
+    )
     
     # Trigger an initial full scan to backup existing saves
     logging.info("Performing initial save discovery and backup...")

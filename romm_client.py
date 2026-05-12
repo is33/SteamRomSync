@@ -12,6 +12,7 @@ class RomMClient:
             self.session.auth = HTTPBasicAuth(username, password)
             logging.info("RomMClient: Using Basic Authentication")
         elif api_key:
+            # Although you mentioned BasicAuth, keeping Bearer as a fallback if no username/pass
             self.session.headers.update({"Authorization": f"Bearer {api_key}"})
             logging.info("RomMClient: Using Bearer Token Authentication")
         else:
@@ -21,7 +22,8 @@ class RomMClient:
         """Checks if the RomM instance is reachable."""
         url = f"{self.base_url}/api/heartbeat"
         try:
-            response = requests.get(url, timeout=5) # Use direct requests to avoid session auth for heartbeat
+            # Use session to ensure auth is applied if needed, though heartbeat is often public
+            response = self.session.get(url, timeout=5)
             if response.status_code == 200:
                 logging.info("RomM Heartbeat: OK")
                 return True
@@ -61,6 +63,18 @@ class RomMClient:
             
             response.raise_for_status()
             return response.json()
+
+    def delete_save(self, save_id):
+        """Deletes a specific save file from RomM."""
+        url = f"{self.base_url}/api/saves/{save_id}"
+        try:
+            logging.info(f"Deleting save ID: {save_id} from RomM...")
+            response = self.session.delete(url)
+            response.raise_for_status()
+            return True
+        except Exception as e:
+            logging.error(f"Failed to delete save {save_id}: {e}")
+            return False
 
     def get_all_saves(self):
         """Fetches all save records from RomM."""

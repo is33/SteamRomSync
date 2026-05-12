@@ -40,25 +40,110 @@ class SaveManager(ctk.CTk):
         self.grid_columnconfigure(1, weight=3)
         self.grid_rowconfigure(0, weight=1)
 
-        # Left Sidebar: ROM List
+        # Left Sidebar: Navigation
         self.sidebar = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         
-        self.sidebar_label = ctk.CTkLabel(self.sidebar, text="ROMs", font=("Helvetica", 20, "bold"))
+        self.sidebar_label = ctk.CTkLabel(self.sidebar, text="SRS Manager", font=("Helvetica", 20, "bold"))
         self.sidebar_label.pack(pady=20)
         
-        self.rom_listbox = ctk.CTkScrollableFrame(self.sidebar, label_text="Select a Game")
-        self.rom_listbox.pack(fill="both", expand=True, padx=10, pady=10)
+        self.btn_roms = ctk.CTkButton(self.sidebar, text="Saves", command=self.show_rom_view)
+        self.btn_roms.pack(fill="x", pady=10, padx=10)
         
-        # Right Main: Save Versions
+        self.btn_settings = ctk.CTkButton(self.sidebar, text="Settings", command=self.show_settings_view)
+        self.btn_settings.pack(fill="x", pady=10, padx=10)
+
+        # Right Main: Content Area
         self.main_view = ctk.CTkFrame(self)
         self.main_view.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         
+        self.show_rom_view()
+
+    def show_rom_view(self):
+        # Clear main view
+        for widget in self.main_view.winfo_children():
+            widget.destroy()
+
         self.rom_title = ctk.CTkLabel(self.main_view, text="Select a game from the list", font=("Helvetica", 24, "bold"))
         self.rom_title.pack(pady=20)
         
-        self.version_list = ctk.CTkScrollableFrame(self.main_view, label_text="Save Versions")
-        self.version_list.pack(fill="both", expand=True, padx=10, pady=10)
+        container = ctk.CTkFrame(self.main_view)
+        container.pack(fill="both", expand=True)
+        container.grid_columnconfigure(0, weight=1)
+        container.grid_columnconfigure(1, weight=2)
+        container.grid_rowconfigure(0, weight=1)
+
+        self.rom_listbox = ctk.CTkScrollableFrame(container, label_text="ROMs")
+        self.rom_listbox.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        
+        self.version_list = ctk.CTkScrollableFrame(container, label_text="Save Versions")
+        self.version_list.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+        self.load_data()
+
+    def show_settings_view(self):
+        # Clear main view
+        for widget in self.main_view.winfo_children():
+            widget.destroy()
+
+        self.rom_title = ctk.CTkLabel(self.main_view, text="Settings", font=("Helvetica", 24, "bold"))
+        self.rom_title.pack(pady=20)
+
+        settings_frame = ctk.CTkScrollableFrame(self.main_view)
+        settings_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Exclusion List
+        ctk.CTkLabel(settings_frame, text="Exclusion List (Comma separated names/paths)", font=("Helvetica", 14, "bold")).pack(pady=(10, 5), padx=10, anchor="w")
+        self.exclusion_entry = ctk.CTkEntry(settings_frame, width=500)
+        self.exclusion_entry.insert(0, os.getenv("EXCLUSION_LIST", ""))
+        self.exclusion_entry.pack(pady=5, padx=10, fill="x")
+
+        # Save Keep Count
+        ctk.CTkLabel(settings_frame, text="Save Versions to Keep (0 = Unlimited)", font=("Helvetica", 14, "bold")).pack(pady=(20, 5), padx=10, anchor="w")
+        self.keep_count_entry = ctk.CTkEntry(settings_frame, width=100)
+        self.keep_count_entry.insert(0, os.getenv("SAVE_KEEP_COUNT", "0"))
+        self.keep_count_entry.pack(pady=5, padx=10, anchor="w")
+
+        # Save Button
+        save_btn = ctk.CTkButton(settings_frame, text="Save Settings", command=self.save_settings)
+        save_btn.pack(pady=30, padx=10)
+
+    def save_settings(self):
+        exclusions = self.exclusion_entry.get()
+        keep_count = self.keep_count_entry.get()
+
+        try:
+            # Simple .env update
+            env_path = ".env"
+            lines = []
+            if os.path.exists(env_path):
+                with open(env_path, "r") as f:
+                    lines = f.readlines()
+            
+            new_lines = []
+            keys_handled = set()
+            for line in lines:
+                if line.startswith("EXCLUSION_LIST="):
+                    new_lines.append(f"EXCLUSION_LIST={exclusions}\n")
+                    keys_handled.add("EXCLUSION_LIST")
+                elif line.startswith("SAVE_KEEP_COUNT="):
+                    new_lines.append(f"SAVE_KEEP_COUNT={keep_count}\n")
+                    keys_handled.add("SAVE_KEEP_COUNT")
+                else:
+                    new_lines.append(line)
+            
+            if "EXCLUSION_LIST" not in keys_handled:
+                new_lines.append(f"EXCLUSION_LIST={exclusions}\n")
+            if "SAVE_KEEP_COUNT" not in keys_handled:
+                new_lines.append(f"SAVE_KEEP_COUNT={keep_count}\n")
+
+            with open(env_path, "w") as f:
+                f.writelines(new_lines)
+            
+            self.show_info("Settings saved successfully!\nRestart the service to apply changes.")
+            load_dotenv() # Reload in current process
+        except Exception as e:
+            self.show_error(f"Failed to save settings: {e}")
 
     def load_data(self):
         saves = self.client.get_all_saves()
