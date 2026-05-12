@@ -2,6 +2,10 @@
 
 A background service for Steam Deck / SteamOS that automatically synchronizes emulator save files to your [RomM](https://github.com/romm-manager/romm) instance.
 
+# Note
+
+This was made 100% with AI - I dont code but I had a need for this and despite my grudge against AI, it's the only way I could get this running.
+
 ## Features
 - **Automatic Monitoring:** Uses filesystem watchers to detect save file changes in real-time.
 - **Auto-Discovery:** Periodically scans common EmuDeck locations (Internal and SD Card) to find and sync saves automatically.
