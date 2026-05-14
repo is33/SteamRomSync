@@ -22,9 +22,13 @@ fi
 # Ensure remote URL is correct
 git remote set-url origin "$REPO_URL"
 
-echo "Pulling latest changes from $BRANCH branch..."
+echo "Synchronizing with $BRANCH branch..."
 git fetch origin "$BRANCH"
+
+# Force switch to the correct branch and align with remote
+git checkout -B "$BRANCH" "origin/$BRANCH"
 git reset --hard "origin/$BRANCH"
+git branch --set-upstream-to="origin/$BRANCH" "$BRANCH"
 
 # Ensure scripts remain executable
 chmod +x "$SCRIPT_DIR/install.sh"
@@ -45,4 +49,4 @@ echo "Restarting service..."
 systemctl --user daemon-reload
 systemctl --user restart "$SERVICE_NAME"
 
-echo "Update complete! All files have been synchronized."
+echo "Update complete! All files have been synchronized to the $BRANCH branch."
