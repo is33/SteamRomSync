@@ -1,21 +1,35 @@
 #!/bin/bash
 
 # SteamRomSync Updater for Steam Deck
+# This script handles both existing git repos and "un-gitted" ZIP installs.
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 SERVICE_NAME="steamromsync.service"
+REPO_URL="https://github.com/is33/SteamRomSync.git"
+BRANCH="beta"
 
-echo "Updating SteamRomSync..."
+echo "Checking for SteamRomSync updates..."
 
 cd "$SCRIPT_DIR"
 
-# Pull latest changes
-if [ -d ".git" ]; then
-    echo "Pulling latest changes from git..."
-    git pull
-else
-    echo "Git repository not found, skipping git pull."
+# Self-Healing: Check if this is a git repository
+if [ ! -d ".git" ]; then
+    echo "This folder is not a git repository. Initializing connection to GitHub..."
+    git init
+    git remote add origin "$REPO_URL"
 fi
+
+# Ensure remote URL is correct
+git remote set-url origin "$REPO_URL"
+
+echo "Pulling latest changes from $BRANCH branch..."
+git fetch origin "$BRANCH"
+git reset --hard "origin/$BRANCH"
+
+# Ensure scripts remain executable
+chmod +x "$SCRIPT_DIR/install.sh"
+chmod +x "$SCRIPT_DIR/uninstall.sh"
+chmod +x "$SCRIPT_DIR/update.sh"
 
 # Update dependencies
 if [ -d "venv" ]; then
@@ -31,4 +45,4 @@ echo "Restarting service..."
 systemctl --user daemon-reload
 systemctl --user restart "$SERVICE_NAME"
 
-echo "Update complete!"
+echo "Update complete! All files have been synchronized."
