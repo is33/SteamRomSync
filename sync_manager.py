@@ -1,16 +1,35 @@
 import os
 import logging
+import json
 from romm_client import RomMClient
 from notifications import NotificationManager
+
+MAPPINGS_FILE = "mappings.json"
 
 class SyncManager:
     def __init__(self, client: RomMClient, monitor_paths=None, exclusion_list=None, save_keep_count=0):
         self.client = client
-        self.rom_id_cache = {}
         self.monitor_paths = monitor_paths or []
         self.exclusion_list = exclusion_list or []
         self.save_keep_count = save_keep_count
         self.last_sync_times = {} # path -> mtime
+        self.mappings = self.load_mappings()
+
+    def load_mappings(self):
+        if os.path.exists(MAPPINGS_FILE):
+            try:
+                with open(MAPPINGS_FILE, "r") as f:
+                    return json.load(f)
+            except Exception as e:
+                logging.error(f"Failed to load mappings: {e}")
+        return {}
+
+    def save_mappings(self):
+        try:
+            with open(MAPPINGS_FILE, "w") as f:
+                json.dump(self.mappings, f, indent=4)
+        except Exception as e:
+            logging.error(f"Failed to save mappings: {e}")
 
     def perform_full_scan(self):
         """Discovers and syncs all changed save files."""
@@ -125,15 +144,34 @@ class SyncManager:
             logging.error(f"Save cleanup failed for ROM ID {rom_id}: {e}")
 
     def get_rom_id(self, rom_name):
-        """Gets the RomM ID for a ROM name, using cache if available."""
-        if rom_name in self.rom_id_cache:
-            return self.rom_id_cache[rom_name]
+        """Gets the RomM ID for a ROM name, using persistent mappings."""
+        if rom_name in self.mappings:
+            map_data = self.mappings[rom_name]
+            if map_data.get("confirmed", False):
+                return map_data["rom_id"]
+            else:
+                logging.info(f"Mapping for {rom_name} exists but is unconfirmed. Skipping sync.")
+                return None
         
         try:
-            rom_id = self.client.search_rom(rom_name)
-            if rom_id:
-                self.rom_id_cache[rom_name] = rom_id
-                return rom_id
+            result = self.client.search_rom(rom_name)
+            if result:
+                rom_id, matched_name, score = result
+                # If it's an exact match (100), auto-confirm. Otherwise, mark as unconfirmed.
+                confirmed = (score == 100)
+                self.mappings[rom_name] = {
+                    "rom_id": rom_id,
+                    "matched_name": matched_name,
+                    "score": score,
+                    "confirmed": confirmed
+                }
+                self.save_mappings()
+                
+                if confirmed:
+                    return rom_id
+                else:
+                    logging.info(f"Fuzzy match found for {rom_name} (Best match: {matched_name}, Score: {score}). Added to pending mappings.")
+                    return None
         except Exception as e:
             logging.error(f"Error searching for ROM {rom_name}: {e}")
             

@@ -3,3 +3,4 @@ watchdog==3.0.0
 python-dotenv==1.0.1
 pyyaml==6.0.1
 customtkinter==5.2.2
+thefuzz==0.22.1
