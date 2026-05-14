@@ -130,20 +130,36 @@ class RomMClient:
             response.raise_for_status()
             data = response.json()
             
-            results = data.get("roms", data) if isinstance(data, dict) else data
+            # RomM can return a list or a dict containing a list
+            if isinstance(data, dict):
+                results = data.get("roms", data.get("results", []))
+                # If it's still a dict and not a list, it might be a single ROM or a response object
+                if isinstance(results, dict):
+                    results = [results]
+            elif isinstance(data, list):
+                results = data
+            else:
+                results = []
             
             if not results:
+                logging.warning(f"No results found for {search_term}")
                 return None
 
             rom_map = {}
             for rom in results:
+                # Ensure rom is a dictionary before calling .get()
+                if not isinstance(rom, dict):
+                    continue
+                    
                 display_name = rom.get("name") or os.path.basename(rom.get("path", ""))
                 if display_name:
                     rom_map[display_name] = rom
 
             if not rom_map:
-                res = results[0]
-                return res.get("id"), res.get("name"), 0
+                if results and isinstance(results[0], dict):
+                    res = results[0]
+                    return res.get("id"), res.get("name"), 0
+                return None
 
             # Perform fuzzy matching
             match, score = process.extractOne(search_term, rom_map.keys())
@@ -154,9 +170,12 @@ class RomMClient:
                 rom_obj = rom_map[match]
                 return rom_obj.get("id"), match, score
             
-            # Fallback
-            res = results[0]
-            return res.get("id"), res.get("name"), 0
+            # Fallback to first valid result
+            for res in results:
+                if isinstance(res, dict) and res.get("id"):
+                    return res.get("id"), res.get("name"), 0
+            
+            return None
             
         except Exception as e:
             logging.error(f"Search failed for {search_term}: {e}")
