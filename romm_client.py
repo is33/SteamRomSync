@@ -46,18 +46,21 @@ class RomMClient:
         # Create a timestamped filename: "SaveName_20231027_123000.srm"
         versioned_filename = f"{name}_{timestamp}{ext}"
         
+        # Query parameters as required by RomM API
+        params = {
+            'rom_id': rom_id
+        }
+        if emulator:
+            params['emulator'] = emulator
+
         with open(file_path, 'rb') as f:
             files = {
                 'file': (versioned_filename, f, 'application/octet-stream')
             }
-            data = {
-                'rom_id': rom_id,
-            }
-            if emulator:
-                data['emulator'] = emulator
 
             logging.info(f"Uploading {versioned_filename} to RomM (ID: {rom_id})...")
-            response = self.session.post(url, files=files, data=data)
+            # Pass params as query parameters
+            response = self.session.post(url, files=files, params=params)
             
             if response.status_code != 200:
                 logging.error(f"Upload failed: {response.status_code} - {response.text}")
