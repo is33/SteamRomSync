@@ -120,22 +120,22 @@ class RomMClient:
         """
         url = f"{self.base_url}/api/roms"
         params = {
-            "search": search_term,
+            "search_term": search_term, # Correct parameter name for this RomM version
             "page": 1,
             "page_size": 50
         }
         
         try:
-            response = self.session.get(url, params=params)
+            response = self.session.get(url, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
             
-            # RomM can return a list or a dict containing a list
+            # This version of RomM uses 'items' key for results
             if isinstance(data, dict):
-                results = data.get("roms", data.get("results", []))
-                # If it's still a dict and not a list, it might be a single ROM or a response object
-                if isinstance(results, dict):
-                    results = [results]
+                results = data.get("items", data.get("roms", data.get("results", [])))
+                if not results and not any(k in data for k in ["items", "roms", "results"]):
+                    # If it's a dict but no known keys, it might be a single object or empty list
+                    results = [data] if data.get("id") else []
             elif isinstance(data, list):
                 results = data
             else:
@@ -147,11 +147,11 @@ class RomMClient:
 
             rom_map = {}
             for rom in results:
-                # Ensure rom is a dictionary before calling .get()
                 if not isinstance(rom, dict):
                     continue
                     
-                display_name = rom.get("name") or os.path.basename(rom.get("path", ""))
+                # Use name or filename/path for matching
+                display_name = rom.get("name") or rom.get("fs_name") or os.path.basename(rom.get("fs_path", ""))
                 if display_name:
                     rom_map[display_name] = rom
 
