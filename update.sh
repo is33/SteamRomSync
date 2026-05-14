@@ -26,7 +26,8 @@ echo "Synchronizing with $BRANCH branch..."
 git fetch origin "$BRANCH"
 
 # Force switch to the correct branch and align with remote
-git checkout -B "$BRANCH" "origin/$BRANCH"
+# -f forces the checkout even if update.sh itself was modified locally
+git checkout -f -B "$BRANCH" "origin/$BRANCH"
 git reset --hard "origin/$BRANCH"
 git branch --set-upstream-to="origin/$BRANCH" "$BRANCH"
 
