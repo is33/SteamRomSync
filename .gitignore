@@ -1,11 +1,16 @@
-__pycache__/
-*.py[cod]
-*$py.class
 .env
 venv/
 .venv/
-build/
-dist/
-*.egg-info/
-.vscode/
-.idea/
+gemini.md
+*.pyc
+__pycache__/
+*.json
+*.sav
+debug_*.py
+test_*.py
+brute_force_*.py
+reproduce_*.py
+extract_*.py
+Auvik Installer.exe
+target/
+Cargo.lock
