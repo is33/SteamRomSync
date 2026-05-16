@@ -39,28 +39,25 @@ class RomMClient:
         """Uploads a save file to RomM with a timestamped filename for versioning."""
         url = f"{self.base_url}/api/saves"
         
-        import datetime
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        original_filename = os.path.basename(file_path)
-        name, ext = os.path.splitext(original_filename)
-        # Create a timestamped filename: "SaveName_20231027_123000.srm"
-        versioned_filename = f"{name}_{timestamp}{ext}"
-        
-        # Query parameters as required by RomM API
+        # Use query parameters
         params = {
-            'rom_id': rom_id
+            'rom_id': int(rom_id),
+            'overwrite': 'true' # Always overwrite if it's a versioned sync? 
+                                # Or depends on RomM behavior
         }
         if emulator:
             params['emulator'] = emulator
 
+        # Open the file in binary mode
         with open(file_path, 'rb') as f:
+            # Simplest multipart structure
             files = {
-                'file': (versioned_filename, f, 'application/octet-stream')
+                'file': f
             }
 
-            logging.info(f"Uploading {versioned_filename} to RomM (ID: {rom_id})...")
-            # Pass params as query parameters
-            response = self.session.post(url, files=files, params=params)
+            logging.info(f"Uploading {os.path.basename(file_path)} to RomM (ID: {rom_id})...")
+            # Note: We don't set headers manually; requests handles Content-Type for multipart
+            response = self.session.post(url, params=params, files=files, timeout=30)
             
             if response.status_code != 200:
                 logging.error(f"Upload failed: {response.status_code} - {response.text}")
