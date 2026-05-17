@@ -4,6 +4,8 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 SERVICE_NAME="steamromsync.service"
+TIMER_NAME="steamromsync-update.timer"
+UPDATE_SERVICE_NAME="steamromsync-update.service"
 USER_SYSTEMD_DIR="$HOME/.config/systemd/user"
 
 echo "Setting up SteamRomSync in $SCRIPT_DIR..."
@@ -29,11 +31,19 @@ mkdir -p "$USER_SYSTEMD_DIR"
 # Link or copy service file
 cp "$SCRIPT_DIR/$SERVICE_NAME" "$USER_SYSTEMD_DIR/"
 
+# Setup Auto-Update service
+echo "Configuring auto-update timer..."
+sed -i "s|REPLACE_PATH|$SCRIPT_DIR|g" "$SCRIPT_DIR/$UPDATE_SERVICE_NAME"
+cp "$SCRIPT_DIR/$UPDATE_SERVICE_NAME" "$USER_SYSTEMD_DIR/"
+cp "$SCRIPT_DIR/$TIMER_NAME" "$USER_SYSTEMD_DIR/"
+
 # Reload systemd and enable service
-echo "Enabling and starting service..."
+echo "Enabling and starting services..."
 systemctl --user daemon-reload
 systemctl --user enable "$SERVICE_NAME"
 systemctl --user start "$SERVICE_NAME"
+systemctl --user enable "$TIMER_NAME"
+systemctl --user start "$TIMER_NAME"
 
 # Ensure service runs even when not in Desktop mode
 echo "Enabling linger for 'deck' user to ensure persistence..."

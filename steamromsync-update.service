@@ -1,0 +1,8 @@
+[Unit]
+Description=SteamRomSync Auto-Update Service
+
+[Service]
+Type=oneshot
+ExecStart=REPLACE_PATH/update.sh
+WorkingDirectory=REPLACE_PATH
+User=%u

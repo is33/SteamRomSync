@@ -1,0 +1,10 @@
+[Unit]
+Description=Run SteamRomSync update every 14 days
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=14d
+AccuracySec=1d
+
+[Install]
+WantedBy=timers.target
