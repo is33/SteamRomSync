@@ -61,14 +61,14 @@ class NotificationManager:
         headers = {"Authorization": f"token {token}"}
         payload = {
             "title": "Automated Sync Error",
-            "body": f"Sync Error:
+            "body": f"""Sync Error:
 
 {error_msg}
 
 Context:
 {context}
 
-Please check logs for more details."
+Please check logs for more details."""
         }
         try:
             requests.post(url, headers=headers, json=payload, timeout=10)
