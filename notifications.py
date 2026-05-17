@@ -31,10 +31,11 @@ class NotificationManager:
     @staticmethod
     def notify_success(rom_name, filename):
         """Standard success notification for a sync."""
+        message = "Successfully synced save for " + rom_name + ":
+" + filename
         NotificationManager.send(
             "SteamRomSync", 
-            f"Successfully synced save for {rom_name}:
-{filename}",
+            message,
             icon="emblem-shared"
         )
 
@@ -59,16 +60,19 @@ class NotificationManager:
         
         url = f"https://api.github.com/repos/{repo}/issues"
         headers = {"Authorization": f"token {token}"}
-        payload = {
-            "title": "Automated Sync Error",
-            "body": f"""Sync Error:
+        
+        body = "Sync Error:
 
-{error_msg}
+" + error_msg + "
 
 Context:
-{context}
+" + context + "
 
-Please check logs for more details."""
+Please check logs for more details."
+        
+        payload = {
+            "title": "Automated Sync Error",
+            "body": body
         }
         try:
             requests.post(url, headers=headers, json=payload, timeout=10)
