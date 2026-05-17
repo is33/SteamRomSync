@@ -50,10 +50,10 @@ class RomMClient:
         # Standard multipart upload
         filename = os.path.basename(file_path)
         with open(file_path, 'rb') as f:
-            # Many RomM versions expect 'file' as the key.
+            # RomM expects 'saveFile' as the multipart key.
             # Using tuple format to ensure filename and content-type are sent.
             files = {
-                'file': (filename, f, 'application/octet-stream')
+                'saveFile': (filename, f, 'application/octet-stream')
             }
 
             logging.info(f"Uploading {filename} to RomM (ID: {rom_id})...")
