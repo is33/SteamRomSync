@@ -8,18 +8,15 @@ class NotificationManager:
     def send(title, message, icon=None, urgency="normal"):
         """Sends a desktop notification using notify-send."""
         try:
-            # Check if notify-send exists
             if subprocess.run(["which", "notify-send"], capture_output=True).returncode != 0:
                 logging.warning("notify-send not found. Skipping notification.")
                 return False
 
             cmd = ["notify-send", title, message, "-u", urgency]
             
-            # Add icon if provided and exists
             if icon and os.path.exists(icon):
                 cmd.extend(["-i", icon])
             elif icon:
-                # Could be a themed icon name
                 cmd.extend(["-i", icon])
 
             subprocess.run(cmd, check=True)
@@ -31,10 +28,9 @@ class NotificationManager:
     @staticmethod
     def notify_success(rom_name, filename):
         """Standard success notification for a sync."""
-        # Using string concatenation with explicit 
-
-        message = "Successfully synced save for " + rom_name + ":
-" + filename
+        # Use chr(10) to force a newline without breaking Python syntax
+        newline = chr(10)
+        message = "Successfully synced save for " + rom_name + ":" + newline + filename
         NotificationManager.send(
             "SteamRomSync", 
             message,
@@ -63,15 +59,9 @@ class NotificationManager:
         url = "https://api.github.com/repos/" + repo + "/issues"
         headers = {"Authorization": "token " + token}
         
-        # Construct body safely using concatenation to avoid multiline string issues
-        body = "Sync Error:
-
-" + error_msg + "
-
-Context:
-" + context + "
-
-Please check logs for more details."
+        # Use chr(10) for safe multiline string body
+        newline = chr(10)
+        body = "Sync Error:" + newline + newline + error_msg + newline + newline + "Context:" + newline + context + newline + newline + "Please check logs for more details."
         
         payload = {
             "title": "Automated Sync Error",
