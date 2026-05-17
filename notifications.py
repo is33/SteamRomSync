@@ -1,6 +1,7 @@
 import subprocess
 import logging
 import os
+import requests
 
 class NotificationManager:
     @staticmethod
@@ -32,7 +33,8 @@ class NotificationManager:
         """Standard success notification for a sync."""
         NotificationManager.send(
             "SteamRomSync", 
-            f"Successfully synced save for {rom_name}:\n{filename}",
+            f"Successfully synced save for {rom_name}:
+{filename}",
             icon="emblem-shared"
         )
 
@@ -45,3 +47,31 @@ class NotificationManager:
             urgency="critical",
             icon="dialog-error"
         )
+    
+    @staticmethod
+    def report_error_to_github(error_msg, context):
+        """Reports a persistent error to the GitHub repository as an issue."""
+        token = os.getenv("GITHUB_PAT")
+        repo = os.getenv("GITHUB_REPO")
+        if not token or not repo:
+            logging.info("GitHub reporting not configured. Skipping.")
+            return
+        
+        url = f"https://api.github.com/repos/{repo}/issues"
+        headers = {"Authorization": f"token {token}"}
+        payload = {
+            "title": "Automated Sync Error",
+            "body": f"Sync Error:
+
+{error_msg}
+
+Context:
+{context}
+
+Please check logs for more details."
+        }
+        try:
+            requests.post(url, headers=headers, json=payload, timeout=10)
+            logging.info("Reported error to GitHub.")
+        except Exception as e:
+            logging.error(f"Failed to report error to GitHub: {e}")

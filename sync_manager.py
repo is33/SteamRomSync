@@ -106,6 +106,7 @@ class SyncManager:
             except Exception as e:
                 logging.error(f"Failed to upload save for {rom_name}: {e}")
                 NotificationManager.notify_error(f"Failed to sync {rom_name}: {e}")
+                NotificationManager.report_error_to_github(str(e), f"ROM: {rom_name}, File: {file_path}")
         else:
             logging.warning(f"Could not find ROM ID for {rom_name}. Skipping.")
 
