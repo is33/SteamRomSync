@@ -31,6 +31,8 @@ class NotificationManager:
     @staticmethod
     def notify_success(rom_name, filename):
         """Standard success notification for a sync."""
+        # Using string concatenation with explicit 
+
         message = "Successfully synced save for " + rom_name + ":
 " + filename
         NotificationManager.send(
@@ -58,9 +60,10 @@ class NotificationManager:
             logging.info("GitHub reporting not configured. Skipping.")
             return
         
-        url = f"https://api.github.com/repos/{repo}/issues"
-        headers = {"Authorization": f"token {token}"}
+        url = "https://api.github.com/repos/" + repo + "/issues"
+        headers = {"Authorization": "token " + token}
         
+        # Construct body safely using concatenation to avoid multiline string issues
         body = "Sync Error:
 
 " + error_msg + "
